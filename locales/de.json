@@ -1,0 +1,65 @@
+{
+  "name": "Deutsch",
+  "voices": { "male": "de-DE-ConradNeural", "female": "de-DE-KatjaNeural" },
+  "presets": {
+    "playful": {
+      "code": { "done": "Ich bin fertig!", "needs": "Ich brauche dich!" },
+      "cowork": { "done": "Ich bin auch fertig!", "needs": "Ich brauche dich auch!" }
+    },
+    "neutral": {
+      "code": { "done": "Claude Code ist fertig.", "needs": "Claude Code braucht dich." },
+      "cowork": { "done": "Cowork ist fertig.", "needs": "Cowork braucht dich." }
+    }
+  },
+  "ui": {
+    "code_title": "Claude Code",
+    "cowork_title": "Claude Cowork",
+    "stop": "Stimme stoppen",
+    "just_now": "gerade eben",
+    "minutes_ago": "vor {n} Min.",
+    "hours_ago": "vor {n} Std.",
+    "more": "+{n} weitere"
+  },
+  "installer": {
+    "q_tone": "Ton der Nachrichten",
+    "tone_playful": "Verspielt (Standard)",
+    "tone_neutral": "Neutral (Büro)",
+    "q_code_voice": "Stimme für Claude Code",
+    "q_cowork_voice": "Stimme für Cowork",
+    "voice_male": "Männlich",
+    "voice_female": "Weiblich",
+    "voice_custom": "Genauer Name der Stimme (erweitert)",
+    "q_custom_voice": "Name der edge-tts-Stimme (Beispiel: de-AT-JonasNeural)",
+    "q_messages": "Nachrichten. Enter übernimmt die Vorgabe in eckigen Klammern.",
+    "msg_code_done": "Claude Code ist fertig",
+    "msg_code_needs": "Claude Code braucht dich",
+    "msg_cowork_done": "Cowork ist fertig",
+    "msg_cowork_needs": "Cowork braucht dich",
+    "q_parts": "Was installieren",
+    "parts_both": "Beides (Standard)",
+    "parts_code": "Nur Claude Code",
+    "parts_cowork": "Nur Cowork",
+    "choose": "Auswahl",
+    "step_deps": "Prüfe Python und edge-tts",
+    "step_stop": "Stoppe laufende Alarme",
+    "step_files": "Kopiere Dateien",
+    "step_audio": "Erzeuge die Stimmen",
+    "step_preview": "Hör dir deine Stimmen an",
+    "step_settings": "Füge die Hooks zu den Claude-Code-Einstellungen hinzu",
+    "step_shortcut": "Erstelle die Stopp-Verknüpfung",
+    "step_startup": "Starte den Cowork-Wächter bei der Anmeldung",
+    "step_verify": "Prüfe die Installation",
+    "summary": "ZUSAMMENFASSUNG",
+    "manual": "Von Hand zu tun",
+    "manual_code": "Claude Code: offene Sitzungen laden die neuen Hooks selbst. Wenn ein Alarm nicht ertönt, starte die Sitzung neu.",
+    "manual_cowork_1": "Cowork: Lass die Claude-Desktop-App geöffnet. Sie darf hinter anderen Fenstern liegen, aber nicht im Infobereich geschlossen sein.",
+    "manual_cowork_2": "Die Cowork-Unterhaltungen müssen in der Seitenleiste der App sichtbar sein.",
+    "app_lang_ok": "Sprache der Claude-App: {lang} (unterstützt).",
+    "app_lang_bad": "Die Unterhaltungsliste der Claude-App ist nicht lesbar. Öffne die App mit sichtbarer Seitenleiste und starte dann doctor.ps1.",
+    "hotkey_ok": "{key} stoppt alle Alarme.",
+    "hotkey_conflict": "Auf deinem Tastaturlayout schreibt {key} ein Zeichen ({char}). Starte die Installation erneut mit einer anderen Taste, zum Beispiel -Hotkey Ctrl+Shift+F12.",
+    "tts_fallback": "edge-tts hat nicht funktioniert; ich verwende die Windows-Stimme {voice} (geringere Qualität).",
+    "done_ok": "Installiert. Alle Prüfungen bestanden.",
+    "done_warn": "Installiert, mit Warnungen:"
+  }
+}

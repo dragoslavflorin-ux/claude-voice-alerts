@@ -1,0 +1,28 @@
+{
+  "language": "en",
+  "tone": "playful",
+  "parts": ["code", "cowork"],
+  "code": {
+    "voice": "en-US-GuyNeural",
+    "done": "",
+    "needs": "",
+    "monitor": "leftmost",
+    "corner": "bottom-left"
+  },
+  "cowork": {
+    "voice": "en-US-JennyNeural",
+    "done": "",
+    "needs": "",
+    "monitor": "app",
+    "corner": "bottom-right"
+  },
+  "repeat_pause_seconds": 5,
+  "voice_limit_seconds": 300,
+  "keep_window_after_timeout": true,
+  "min_task_seconds": 0,
+  "cowork_idle_seconds": 20,
+  "max_rows": 5,
+  "margin_px": 16,
+  "hotkey": "Ctrl+Alt+M",
+  "state_dir": "%TEMP%\\claude-voice-alerts"
+}

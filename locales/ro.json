@@ -1,0 +1,65 @@
+{
+  "name": "Română",
+  "voices": { "male": "ro-RO-EmilNeural", "female": "ro-RO-AlinaNeural" },
+  "presets": {
+    "playful": {
+      "code": { "done": "M-am terminat!", "needs": "Am nevoie de tine!" },
+      "cowork": { "done": "Și eu m-am terminat!", "needs": "Și eu am nevoie de tine!" }
+    },
+    "neutral": {
+      "code": { "done": "Claude Code a terminat.", "needs": "Claude Code are nevoie de tine." },
+      "cowork": { "done": "Cowork a terminat.", "needs": "Cowork are nevoie de tine." }
+    }
+  },
+  "ui": {
+    "code_title": "Claude Code",
+    "cowork_title": "Claude Cowork",
+    "stop": "Oprește vocea",
+    "just_now": "chiar acum",
+    "minutes_ago": "acum {n} min",
+    "hours_ago": "acum {n} h",
+    "more": "încă {n}"
+  },
+  "installer": {
+    "q_tone": "Tonul mesajelor",
+    "tone_playful": "Jucăuș (implicit)",
+    "tone_neutral": "Neutru (pentru birou)",
+    "q_code_voice": "Vocea pentru Claude Code",
+    "q_cowork_voice": "Vocea pentru Cowork",
+    "voice_male": "Bărbat",
+    "voice_female": "Femeie",
+    "voice_custom": "Numele exact al vocii (avansat)",
+    "q_custom_voice": "Numele vocii edge-tts (exemplu: ro-RO-EmilNeural)",
+    "q_messages": "Mesajele. Apasă Enter ca să păstrezi presetul dintre paranteze.",
+    "msg_code_done": "Claude Code a terminat",
+    "msg_code_needs": "Claude Code are nevoie de tine",
+    "msg_cowork_done": "Cowork a terminat",
+    "msg_cowork_needs": "Cowork are nevoie de tine",
+    "q_parts": "Ce se instalează",
+    "parts_both": "Ambele (implicit)",
+    "parts_code": "Doar Claude Code",
+    "parts_cowork": "Doar Cowork",
+    "choose": "Alege",
+    "step_deps": "Verific Python și edge-tts",
+    "step_stop": "Opresc alertele care rulează",
+    "step_files": "Copiez fișierele",
+    "step_audio": "Generez vocile",
+    "step_preview": "Ascultă vocile alese",
+    "step_settings": "Adaug hook-urile în setările Claude Code",
+    "step_shortcut": "Creez scurtătura de oprire",
+    "step_startup": "Pornesc watcher-ul Cowork la logare",
+    "step_verify": "Verific instalarea",
+    "summary": "REZUMAT",
+    "manual": "De făcut manual",
+    "manual_code": "Claude Code: sesiunile deschise preiau singure hook-urile noi. Dacă o alertă nu sună, repornește sesiunea.",
+    "manual_cowork_1": "Cowork: ține aplicația desktop Claude deschisă. Poate sta în spatele altor ferestre, dar nu închisă în tray.",
+    "manual_cowork_2": "Conversațiile Cowork trebuie să se vadă în bara laterală a aplicației.",
+    "app_lang_ok": "Limba aplicației Claude: {lang} (suportată).",
+    "app_lang_bad": "Nu pot citi lista de conversații din aplicația Claude. Deschide aplicația cu bara laterală vizibilă, apoi rulează doctor.ps1.",
+    "hotkey_ok": "{key} oprește toate alertele.",
+    "hotkey_conflict": "Pe tastatura ta, {key} scrie un caracter ({char}). Rulează din nou instalatorul cu altă combinație, de exemplu -Hotkey Ctrl+Shift+F12.",
+    "tts_fallback": "edge-tts nu a mers; folosesc vocea Windows {voice} (calitate mai slabă).",
+    "done_ok": "Instalat. Toate verificările au trecut.",
+    "done_warn": "Instalat, cu avertismente:"
+  }
+}

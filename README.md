@@ -1,105 +1,105 @@
-# claude-alerte-vocale
+# claude-voice-alerts
 
-Alerte vocale în română pentru **Claude Code** și **Claude Cowork**, pe Windows. Când Claude termină sau are nevoie de tine, auzi o voce și apare o fereastră mică în colțul de jos al ecranului. Fereastra stă deasupra celorlalte și nu îți fură focusul.
+Voice and on-screen alerts for Claude Code and Claude Cowork on Windows. Hear when a task finishes or needs you, see which project it was, and walk away from your desk.
 
-| Când | Claude Code (stânga jos, vocea Emil) | Cowork (dreapta jos, vocea Alina) |
+[Română](README.ro.md)
+
+![Claude Code alerts on the left, Cowork alerts on the right](docs/screenshot.png)
+
+## What it does
+
+- **Claude Code**: when a session finishes, asks for a permission, asks you a question or waits for plan approval, a voice says so and a window lists the project (the folder you work in). Each terminal has its own row, so 3 to 6 sessions in parallel never overwrite each other.
+- **Claude Cowork**: a small watcher reads the conversation list of the Claude desktop app. When a conversation finishes or waits for you, a second voice answers, and a second window lists the conversation title.
+- The voice repeats every few seconds, up to 5 minutes. Then it goes quiet, but the window stays until you click it.
+- Two alerts at once: the voices take turns, they never talk over each other.
+- Click a row: that alert closes and its window comes to front (the terminal or editor of that session, or the Claude app with that conversation open).
+- 7 languages, any combination of male and female voices, your own messages.
+
+## Requirements
+
+- Windows 10 or 11 (macOS and Linux are not supported yet)
+- Claude Code, for the Claude Code alerts
+- The Claude desktop app, for the Cowork alerts
+- Internet during install (the voices are generated with edge-tts). Python is installed with winget if missing.
+
+## Install
+
+**With Claude Code**, say: `Install the voice alerts from https://github.com/dragoslavflorin-ux/claude-voice-alerts`
+
+**With PowerShell:**
+
+```powershell
+git clone https://github.com/dragoslavflorin-ux/claude-voice-alerts.git "$env:USERPROFILE\claude-voice-alerts"
+cd "$env:USERPROFILE\claude-voice-alerts"
+powershell -ExecutionPolicy Bypass -File .\install.ps1
+```
+
+The installer asks 5 questions, then plays each voice once so you hear what you picked:
+
+| # | Question | Choices | Parameter |
+|---|---|---|---|
+| 1 | Language | Română, English, Español, Português (Brasil), Français, Deutsch, Italiano, Other (any edge-tts voice, your own texts) | `-Language ro\|en\|es\|pt\|fr\|de\|it\|other` |
+| 2 | Tone | Playful (default) or Neutral (office) | `-Tone playful\|neutral` |
+| 3 | Voices | Male or female for Claude Code, then for Cowork, any combination; or an exact voice name | `-CodeVoice male\|female\|<name>` `-CoworkVoice ...` |
+| 4 | Messages | Keep the presets or write any of the 4 | `-CodeDone` `-CodeNeedsYou` `-CoworkDone` `-CoworkNeedsYou` |
+| 5 | What to install | Both, only Claude Code, only Cowork | `-Parts both\|code\|cowork` |
+
+Add `-Yes` to install without questions. Running the installer again uses your previous answers as defaults.
+More options: `-Hotkey Ctrl+Alt+M`, `-CodeMonitor leftmost`, `-CoworkMonitor app`, `-CodeCorner bottom-left`, `-CoworkCorner bottom-right`.
+
+It installs into `%USERPROFILE%\.claude\hooks\claude-voice-alerts\`, adds its hooks to `~/.claude/settings.json` (after a backup, without touching your other settings), adds a Claude Code skill, a Start menu shortcut with the stop hotkey and the Cowork watcher at logon. At the end it checks itself and prints what, if anything, you need to do by hand.
+
+## Customize
+
+Edit `%USERPROFILE%\.claude\hooks\claude-voice-alerts\config.json`, or run the installer again with new answers.
+
+| Setting | Default | Meaning |
 |---|---|---|
-| a terminat | M-am terminat! | Și eu m-am terminat! |
-| cere permisiune sau un răspuns | Am nevoie de tine! | Și eu am nevoie de tine! |
+| `repeat_pause_seconds` | 5 | pause between repeats of a voice |
+| `voice_limit_seconds` | 300 | the voice stops after this |
+| `keep_window_after_timeout` | true | the window stays after the voice stops |
+| `min_task_seconds` | 0 | no alert for tasks shorter than this |
+| `cowork_idle_seconds` | 20 | Cowork alerts even when the Claude app is in front, if you have not touched keyboard or mouse for this long |
+| `code.monitor`, `cowork.monitor` | leftmost, app | `primary`, `leftmost`, `rightmost`, or `app` (the monitor of the session window or of the Claude app) |
+| `code.corner`, `cowork.corner` | bottom-left, bottom-right | `bottom-left`, `bottom-right`, `top-left`, `top-right` |
+| `margin_px` | 16 | distance from the screen edge (scaled with the monitor DPI) |
+| `max_rows` | 5 | rows per window, then "+N more" |
 
-Vocea se repetă la 5 secunde, cel mult 5 minute. Alertele Claude Code și Cowork sunt independente și pot suna în același timp.
+Messages, voices, language and hotkey are changed with the installer, because the voices must be generated again.
 
-## Cerințe
+## Stop, update, uninstall, diagnose
 
-- Windows 10 sau 11
-- Claude Code (pentru alertele Claude Code)
-- aplicația desktop Claude (pentru alertele Cowork)
-- internet la instalare (vocile se generează cu edge-tts)
+- **Stop an alert**: click its row, click the red button (all rows of that window), or press **Ctrl+Alt+M** (everything). Claude Code alerts also stop when you send a new message in that session; Cowork alerts stop when you use the Claude app or when the conversation changes state (read, approved, restarted), even from your phone.
+- **Update**: `git pull`, then run `install.ps1` again.
+- **Uninstall**: `powershell -ExecutionPolicy Bypass -File .\uninstall.ps1` removes exactly what the installer added.
+- **Diagnose**: `powershell -ExecutionPolicy Bypass -File .\doctor.ps1` explains in plain words what does not work and what to do. In Claude Code you can also ask: "the alert did not sound, check claude-voice-alerts".
 
-Python, edge-tts și ffmpeg se instalează automat dacă lipsesc (prin winget și pip).
+## Limitations
 
-## Instalare
+- Windows only for now. All Windows code lives in `platform/windows`, so a macOS port can be added later.
+- Cowork detection needs the Claude desktop app open (its window can stay behind others, but not closed to the tray) with the conversation list visible. It works with every language of the Claude app (labels are read from the app itself at install).
+- If the Claude app is the active window and you used it in the last 20 seconds, Cowork does not speak: you are already looking at it.
+- Clicking a Claude Code row brings the right terminal or editor window to front when it can be identified (Windows Terminal, console, VS Code and its forks); a specific tab inside it cannot be selected.
+- Hooks run through Git Bash when it is installed (about 40 ms per tool call, the cost of starting bash). Without Git Bash they run in PowerShell, about 0.2 s per tool call.
 
-**Varianta a) în Claude Code.** Scrie-i:
+## About the default messages
 
-```
-Instalează alertele din https://github.com/dragoslavflorin-ux/claude-alerte-vocale urmând README-ul
-```
+In Romanian, English and Spanish the playful set has an obvious double meaning. In the other languages it is more subtle. The neutral set is one choice away.
 
-**Varianta b) în PowerShell:**
+## Why this exists
 
-```powershell
-git clone https://github.com/dragoslavflorin-ux/claude-alerte-vocale.git "$env:USERPROFILE\claude-alerte-vocale"
-cd "$env:USERPROFILE\claude-alerte-vocale"
-powershell -ExecutionPolicy Bypass -File .\install.ps1
-```
+I run several projects in parallel. My left monitor runs Claude Code, with three to six terminals open. My right monitor runs the Claude desktop app, with three to six Cowork conversations, one per project. Cowork is the brain: it helps me think, plan and decide. Claude Code is the executor: it builds what we decided. I dictate most of my prompts by voice, so the work goes out fast.
 
-Opțiuni: `-DoarClaudeCode`, `-DoarCowork`, `-FaraVerificare`.
+Then the tasks got long. One hour, two, sometimes four. And the windows started blurring together. Which terminal finished? Which conversation is waiting for my approval? Which one is still working? I caught myself glued to the screens, jumping from window to window, stressed that something had been waiting for me for half an hour while I was staring at the wrong one.
 
-Instalarea:
-- copiază scripturile în `%USERPROFILE%\.claude\hooks\`;
-- face backup la `settings.json` și adaugă hook-urile, fără să atingă alte setări;
-- creează scurtătura de oprire cu tasta Ctrl+Alt+M pe Desktop;
-- pune watcher-ul Cowork la pornirea automată și îl pornește;
-- la final, pornește fiecare alertă câteva secunde, verifică poziția ferestrei și oprirea, apoi afișează un rezumat.
+What I wanted was simple: hand out the work, get up from the desk, make a coffee, and have the machine call me when it is done.
 
-După instalare, închide și redeschide sesiunile Claude Code deschise.
+Now it does. When a Claude Code task finishes, a voice on the left says so. When Cowork finishes, a second voice on the right answers: me too. I hear it from across the room, walk back, handle it, and leave again with a clear head.
 
-### Ca să meargă detecția Cowork
+In Romanian, the default lines are "M-am terminat!" and "Și eu m-am terminat!" ("I finished!" and "I finished too!"). They carry a cheeky double meaning that every Romanian gets instantly. That is intentional. My team loved it, which is exactly why this is now public. Other languages get the closest equivalent we could find, and a neutral, office-safe set is one choice away.
 
-Watcher-ul citește lista de conversații din aplicația desktop Claude. Pentru asta trebuie ca:
-1. aplicația Claude să fie pornită, cu fereastra deschisă (poate sta în spate, dar nu închisă în tray);
-2. interfața aplicației să fie în limba engleză;
-3. conversațiile Cowork să se vadă în bara laterală.
+Florin Dragoslav, broker owner of REMAX Champions, Brașov, Romania
 
-Cât timp aplicația Claude e fereastra activă, alerta Cowork nu sună. Nu e nevoie să activezi notificările din aplicația Claude.
-
-## Personalizare
-
-Modifici `config.json`, apoi rulezi din nou `install.ps1`. Poți schimba:
-- textele celor 4 alerte;
-- vocile (de exemplu `ro-RO-EmilNeural`, `ro-RO-AlinaNeural`);
-- titlul și poziția ferestrei (`Stanga` sau `Dreapta`);
-- `pauza_secunde`: pauza dintre repetări;
-- `limita_secunde`: după cât timp se oprește singură alerta;
-- `margine_px`: distanța ferestrei față de marginea ecranului;
-- `hotkey`: tasta de oprire (de exemplu `Ctrl+Alt+M`).
-
-Vocile se generează din nou doar pentru textele sau vocile schimbate.
-
-## Oprirea unei alerte
-
-- click oriunde pe fereastră;
-- Ctrl+Alt+M oprește toate alertele, Claude Code și Cowork;
-- Claude Code: alerta se oprește singură când scrii un mesaj nou sau Claude continuă lucrul;
-- Cowork: alerta se oprește singură când aduci aplicația Claude în față;
-- după limita din config (implicit 5 minute).
-
-Pentru o verificare manuală:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File "$env:USERPROFILE\.claude\hooks\verifica-alerte.ps1"
-```
-
-Logul watcher-ului Cowork e în `%USERPROFILE%\.claude\hooks\cowork\watch.log`.
-
-## Actualizare
-
-```powershell
-cd "$env:USERPROFILE\claude-alerte-vocale"
-git pull
-powershell -ExecutionPolicy Bypass -File .\install.ps1
-```
-
-## Dezinstalare
-
-```powershell
-cd "$env:USERPROFILE\claude-alerte-vocale"
-powershell -ExecutionPolicy Bypass -File .\uninstall.ps1
-```
-
-Scoate hook-urile, fișierele, scurtătura și pornirea automată, și lasă restul setărilor neatins.
-
-## Licență
+## License
 
 MIT

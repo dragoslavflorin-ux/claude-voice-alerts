@@ -1,0 +1,65 @@
+{
+  "name": "Français",
+  "voices": { "male": "fr-FR-HenriNeural", "female": "fr-FR-DeniseNeural" },
+  "presets": {
+    "playful": {
+      "code": { "done": "J'ai fini !", "needs": "J'ai besoin de toi !" },
+      "cowork": { "done": "Moi aussi, j'ai fini !", "needs": "Moi aussi, j'ai besoin de toi !" }
+    },
+    "neutral": {
+      "code": { "done": "Claude Code a terminé.", "needs": "Claude Code a besoin de vous." },
+      "cowork": { "done": "Cowork a terminé.", "needs": "Cowork a besoin de vous." }
+    }
+  },
+  "ui": {
+    "code_title": "Claude Code",
+    "cowork_title": "Claude Cowork",
+    "stop": "Arrêter la voix",
+    "just_now": "à l'instant",
+    "minutes_ago": "il y a {n} min",
+    "hours_ago": "il y a {n} h",
+    "more": "+{n} autres"
+  },
+  "installer": {
+    "q_tone": "Ton des messages",
+    "tone_playful": "Ludique (par défaut)",
+    "tone_neutral": "Neutre (bureau)",
+    "q_code_voice": "Voix pour Claude Code",
+    "q_cowork_voice": "Voix pour Cowork",
+    "voice_male": "Masculine",
+    "voice_female": "Féminine",
+    "voice_custom": "Nom exact de la voix (avancé)",
+    "q_custom_voice": "Nom de la voix edge-tts (exemple : fr-CA-AntoineNeural)",
+    "q_messages": "Messages. Appuyez sur Entrée pour garder le texte par défaut entre crochets.",
+    "msg_code_done": "Claude Code a fini",
+    "msg_code_needs": "Claude Code a besoin de vous",
+    "msg_cowork_done": "Cowork a fini",
+    "msg_cowork_needs": "Cowork a besoin de vous",
+    "q_parts": "Quoi installer",
+    "parts_both": "Les deux (par défaut)",
+    "parts_code": "Claude Code seulement",
+    "parts_cowork": "Cowork seulement",
+    "choose": "Choix",
+    "step_deps": "Vérification de Python et d'edge-tts",
+    "step_stop": "Arrêt des alertes en cours",
+    "step_files": "Copie des fichiers",
+    "step_audio": "Génération des voix",
+    "step_preview": "Écoutez vos voix",
+    "step_settings": "Ajout des hooks dans les paramètres de Claude Code",
+    "step_shortcut": "Création du raccourci d'arrêt",
+    "step_startup": "Démarrage du veilleur Cowork à l'ouverture de session",
+    "step_verify": "Vérification de l'installation",
+    "summary": "RÉSUMÉ",
+    "manual": "À faire à la main",
+    "manual_code": "Claude Code : les sessions ouvertes chargent seules les nouveaux hooks. Si une alerte ne sonne pas, redémarrez la session.",
+    "manual_cowork_1": "Cowork : gardez l'application de bureau Claude ouverte. Elle peut rester derrière d'autres fenêtres, mais pas fermée dans la zone de notification.",
+    "manual_cowork_2": "Les conversations Cowork doivent être visibles dans la barre latérale de l'application.",
+    "app_lang_ok": "Langue de l'application Claude : {lang} (prise en charge).",
+    "app_lang_bad": "Impossible de lire la liste des conversations de l'application Claude. Ouvrez l'application avec la barre latérale visible, puis lancez doctor.ps1.",
+    "hotkey_ok": "{key} arrête toutes les alertes.",
+    "hotkey_conflict": "Avec votre disposition de clavier, {key} tape un caractère ({char}). Relancez l'installation avec une autre touche, par exemple -Hotkey Ctrl+Shift+F12.",
+    "tts_fallback": "edge-tts n'a pas fonctionné ; j'utilise la voix Windows {voice} (qualité moindre).",
+    "done_ok": "Installé. Toutes les vérifications sont passées.",
+    "done_warn": "Installé avec des avertissements :"
+  }
+}
