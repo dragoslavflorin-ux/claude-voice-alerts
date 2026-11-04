@@ -1,0 +1,14 @@
+# audio generat local de install.ps1
+*.wav
+*.mp3
+# loguri, PID-uri, backup-uri
+*.log
+*.log.1
+*.pid
+*.bak*
+*.tmp
+# fisiere generate la instalare
+alerte-audio.json
+alerte-install.json
+settings.json
+__pycache__/
