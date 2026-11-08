@@ -13,3 +13,5 @@ logs/
 *.bak*
 *.tmp
 __pycache__/
+# night work log (local only)
+NIGHT-LOG.md

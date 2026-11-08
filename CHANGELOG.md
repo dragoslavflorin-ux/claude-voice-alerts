@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.0.0 (2026-11-04)
+## 2.0.0 (2026-11-09)
 
 Renamed from claude-alerte-vocale to claude-voice-alerts. International release.
 
@@ -13,6 +13,7 @@ Renamed from claude-alerte-vocale to claude-voice-alerts. International release.
 - Cowork: alerts when the Claude app is in front but unused for 20 seconds (`cowork_idle_seconds`); alerts clear when the conversation is read, approved or restarted anywhere, including on the phone.
 - Cowork: detects conversations that finish while open, short tasks finished between two reads, questions ("Awaiting answer"), conversations with identical titles, and titles generated after the first reply.
 - Cowork: works with every language of the Claude app; status labels are read from the installed app.
+- Cowork: works with the current sidebar of the Claude desktop app (Chats and tasks, status shown inside a group while a task runs).
 - Multi-monitor placement per part (`primary`, `leftmost`, `rightmost`, `app`) and corner, with DPI scaling of the target monitor.
 - `min_task_seconds`: no alert for short tasks.
 - 7 languages (ro, en, es, pt-BR, fr, de, it) plus "Other" with any edge-tts voice; playful and neutral presets; any male/female combination; custom messages.

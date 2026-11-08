@@ -1,6 +1,6 @@
-# claude-voice-alerts
+# Finished Too
 
-Alerte vocale și pe ecran pentru Claude Code și Claude Cowork, pe Windows. Auzi când o sarcină s-a terminat sau are nevoie de tine, vezi la ce proiect, și poți pleca de la birou.
+**claude-voice-alerts**: alerte vocale și pe ecran pentru Claude Code și Claude Cowork, pe Windows. Auzi când o sarcină s-a terminat sau are nevoie de tine, vezi la ce proiect, și poți pleca de la birou.
 
 [English](README.md)
 
@@ -77,7 +77,7 @@ Mesajele, vocile, limba și tasta se schimbă din instalator, pentru că vocile 
 ## Limitări
 
 - Deocamdată doar Windows. Tot codul pentru Windows stă în `platform/windows`, ca un port pe macOS să poată fi adăugat mai târziu.
-- Detecția Cowork are nevoie de aplicația desktop Claude deschisă (fereastra poate sta în spatele altora, dar nu închisă în tray), cu lista de conversații vizibilă. Merge cu orice limbă a aplicației Claude (etichetele se citesc din aplicație la instalare).
+- Detecția Cowork are nevoie de aplicația desktop Claude deschisă (fereastra poate sta în spatele altora, dar nu închisă în tray), cu lista de conversații vizibilă. Merge cu orice limbă a aplicației Claude (etichetele se citesc din aplicație la instalare). Sunt urmărite doar conversațiile din bara laterală (cele mai recente).
 - Dacă aplicația Claude e fereastra activă și ai folosit-o în ultimele 20 de secunde, Cowork nu vorbește: te uiți deja la ea.
 - Click pe un rând Claude Code aduce în față terminalul sau editorul potrivit, când poate fi identificat (Windows Terminal, consolă, VS Code și variantele lui); un anumit tab din interior nu poate fi selectat.
 - Hook-urile rulează prin Git Bash când e instalat (cam 40 ms la fiecare unealtă folosită, costul pornirii bash). Fără Git Bash rulează în PowerShell, cam 0,2 s la fiecare unealtă.

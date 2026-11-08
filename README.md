@@ -1,6 +1,6 @@
-# claude-voice-alerts
+# Finished Too
 
-Voice and on-screen alerts for Claude Code and Claude Cowork on Windows. Hear when a task finishes or needs you, see which project it was, and walk away from your desk.
+**claude-voice-alerts**: voice and on-screen alerts for Claude Code and Claude Cowork on Windows. Hear when a task finishes or needs you, see which project it was, and walk away from your desk.
 
 [Română](README.ro.md)
 
@@ -77,7 +77,7 @@ Messages, voices, language and hotkey are changed with the installer, because th
 ## Limitations
 
 - Windows only for now. All Windows code lives in `platform/windows`, so a macOS port can be added later.
-- Cowork detection needs the Claude desktop app open (its window can stay behind others, but not closed to the tray) with the conversation list visible. It works with every language of the Claude app (labels are read from the app itself at install).
+- Cowork detection needs the Claude desktop app open (its window can stay behind others, but not closed to the tray) with the conversation list visible. It works with every language of the Claude app (labels are read from the app itself at install). Only the conversations listed in the sidebar (the most recent ones) are watched.
 - If the Claude app is the active window and you used it in the last 20 seconds, Cowork does not speak: you are already looking at it.
 - Clicking a Claude Code row brings the right terminal or editor window to front when it can be identified (Windows Terminal, console, VS Code and its forks); a specific tab inside it cannot be selected.
 - Hooks run through Git Bash when it is installed (about 40 ms per tool call, the cost of starting bash). Without Git Bash they run in PowerShell, about 0.2 s per tool call.

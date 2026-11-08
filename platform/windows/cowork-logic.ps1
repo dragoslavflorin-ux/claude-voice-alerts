@@ -70,6 +70,27 @@ function Get-CoworkEvents($Prev, $Cur, [int]$MassChange = 4) {
     return @{ events = $ev.ToArray(); rebaseline = $false }
 }
 
+# Status label of a conversation row, from its first child element (UIA cached element or any object with
+# .Cached.Name and .CachedChildren). Older app versions name that element directly ("Running", "Idle"), or wrap the
+# label in a "Mark as read" / "Mark as unread" button; newer versions wrap it in an unnamed group
+# (Group > StatusBar "Running"). Returns @{ label; wrapper } where wrapper is the "Mark as ..." name or ''.
+function Get-CoworkRowLabel($StatusEl, [hashtable]$Known, [hashtable]$MarkRead) {
+    $n = "$($StatusEl.Cached.Name)"
+    $wrapper = ''
+    if ($MarkRead.ContainsKey($n) -or $Known[$n] -eq 'wrapper') { $wrapper = $n }
+    elseif ($Known.ContainsKey($n)) { return @{ label = $n; wrapper = '' } }
+    # search the children (a few levels) for the first known status label
+    $queue = New-Object System.Collections.Generic.Queue[object]
+    foreach ($k in @($StatusEl.CachedChildren)) { $queue.Enqueue(@($k, 1)) }
+    while ($queue.Count) {
+        $item = $queue.Dequeue(); $el = $item[0]; $d = $item[1]
+        $kn = "$($el.Cached.Name)"
+        if ($Known.ContainsKey($kn) -and $Known[$kn] -ne 'wrapper') { return @{ label = $kn; wrapper = $wrapper } }
+        if ($d -lt 3) { foreach ($k in @($el.CachedChildren)) { $queue.Enqueue(@($k, $d + 1)) } }
+    }
+    return @{ label = ''; wrapper = $wrapper }
+}
+
 # Foreground rule: alert if Claude is not the active window, or it is but nobody touched keyboard/mouse for IdleSeconds.
 function Test-CoworkShouldAlert([bool]$ClaudeForeground, [long]$IdleMs, [int]$IdleSeconds) {
     if (-not $ClaudeForeground) { return $true }

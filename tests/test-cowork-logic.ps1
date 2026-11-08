@@ -44,5 +44,17 @@ Expect 'keep: input before alert' (@(if (Test-CoworkShouldDismiss $true 900 1000
 Expect 'keep: Claude not in front' (@(if (Test-CoworkShouldDismiss $false 1500 1000) { 'dismiss' })) @()
 Expect 'dismiss across tick wrap' (@(if (Test-CoworkShouldDismiss $true 100 4294967000) { 'dismiss' })) @('dismiss')
 
+# 6. status label of a row, on the structures seen in the Claude app (fake UIA elements)
+function El([string]$name, [object[]]$kids = @()) { [PSCustomObject]@{ Cached = [PSCustomObject]@{ Name = $name }; CachedChildren = $kids } }
+$known = @{ 'Running' = 'active'; 'Awaiting input' = 'needs'; 'Idle' = 'other'; 'Done' = 'other'; 'Mark as unread' = 'wrapper' }
+$mr = @{ 'Mark as read' = 1 }
+function Lbl($el) { $r = Get-CoworkRowLabel $el $known $mr; return "$($r.label)|$($r.wrapper)" }
+Expect 'label named directly (Image Idle)' (Lbl (El 'Idle')) @('Idle|')
+Expect 'label inside Mark as read (unread)' (Lbl (El 'Mark as read' @((El 'Done')))) @('Done|Mark as read')
+Expect 'label inside Mark as unread (read)' (Lbl (El 'Mark as unread' @((El 'Done')))) @('Done|Mark as unread')
+Expect 'running row of the 2026 app: Group > StatusBar Running' (Lbl (El '' @((El 'Running')))) @('Running|')
+Expect 'label two levels down' (Lbl (El '' @((El '' @((El 'Awaiting input')))))) @('Awaiting input|')
+Expect 'unknown label gives nothing' (Lbl (El '' @((El 'Thinking')))) @('|')
+
 "`n$script:pass passed, $script:fail failed"
 exit $script:fail

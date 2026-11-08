@@ -67,6 +67,8 @@ $cfg = Get-CvaConfig
 $loc = Get-CvaLocale $cfg.language
 $state = Get-CvaStateDir $cfg
 $alertsDir = Join-Path $state 'alerts'
+# prompt start times of sessions that ended long ago (one small file per session) are not needed any more
+Get-ChildItem -LiteralPath (Join-Path $state 'start') -File -ErrorAction SilentlyContinue | Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-2) } | Remove-Item -Force -ErrorAction SilentlyContinue
 $audioDir = Join-Path $script:CvaRoot 'audio'
 $parts = @('code', 'cowork')
 $titles = @{ code = "$($loc.ui.code_title)"; cowork = "$($loc.ui.cowork_title)" }
@@ -133,13 +135,24 @@ function Open-CoworkConversation([string]$Title) {
         $cond = New-Object System.Windows.Automation.AndCondition(
             (New-Object System.Windows.Automation.PropertyCondition($A::ControlTypeProperty, [System.Windows.Automation.ControlType]::Text)),
             (New-Object System.Windows.Automation.PropertyCondition($A::NameProperty, $Title)))
-        $t = $A::FromHandle($w).FindFirst([System.Windows.Automation.TreeScope]::Descendants, $cond)
+        # the title text of a row exists only in the raw view
+        $cr = New-Object System.Windows.Automation.CacheRequest
+        $cr.Add($A::NameProperty); $cr.TreeFilter = [System.Windows.Automation.Automation]::RawViewCondition
+        $act = $cr.Activate()
+        try { $t = $A::FromHandle($w).FindFirst([System.Windows.Automation.TreeScope]::Descendants, $cond) } finally { $act.Dispose() }
         $walker = [System.Windows.Automation.TreeWalker]::RawViewWalker
+        $opened = $false
         for ($el = $t; $el; $el = $walker.GetParent($el)) {
             if ($el.Current.ControlType -eq [System.Windows.Automation.ControlType]::Button) {
-                $el.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke(); Write-CvaLog 'hub' "opened conversation [$Title]"; break
+                # only the row itself ("<status> <title>"), never another button around the same text
+                $n = "$($el.Current.Name)"
+                if ($n -eq $Title -or $n.EndsWith(" $Title")) {
+                    $el.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke(); $opened = $true; Write-CvaLog 'hub' "opened conversation [$Title]"
+                }
+                break
             }
         }
+        if (-not $opened) { Write-CvaLog 'hub' "conversation [$Title] not found in the sidebar; Claude brought to front only" }
     } catch { Write-CvaLog 'hub' "could not open conversation [$Title]: $($_.Exception.Message)" }
 }
 

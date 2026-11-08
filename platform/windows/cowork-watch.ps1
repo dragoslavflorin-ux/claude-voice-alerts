@@ -74,11 +74,8 @@ function Read-Row($b) {
         elseif ($seenGroup -and $ct -eq [System.Windows.Automation.ControlType]::Text) { $badge = $true }
     }
     if (-not $title) { return $null }
-    $n = $statusEl.Cached.Name; $unread = $false; $label = $n
-    if ($markRead.ContainsKey($n) -or $catOf[$n] -eq 'wrapper') {
-        $unread = $markRead.ContainsKey($n)
-        $inner = @($statusEl.CachedChildren); $label = if ($inner.Count) { $inner[0].Cached.Name } else { '' }
-    }
+    $st = Get-CoworkRowLabel $statusEl $catOf $markRead
+    $label = $st.label; $unread = $markRead.ContainsKey($st.wrapper)
     $cat = $catOf[$label]
     if (-not $cat -or $cat -eq 'wrapper') { if ($unread) { $cat = 'unread' } else { return $null } }
     if ($cat -eq 'other' -and $unread) { $cat = 'unread' }
@@ -117,7 +114,11 @@ function Read-Rows {
     $win = Get-ClaudeWindow
     if ($win -eq [IntPtr]::Zero) { $script:sidebar = $null; return $null }
     for ($try = 0; $try -lt 2; $try++) {
-        if (-not $script:sidebar) { $script:sidebar = Find-Sidebar $win; if (-not $script:sidebar) { return $null } }
+        if (-not $script:sidebar) {
+            # the app sometimes rejects UIA calls for a few seconds (E_UNEXPECTED while it reloads): treat as "not readable"
+            try { $script:sidebar = Find-Sidebar $win } catch { $script:sidebar = $null }
+            if (-not $script:sidebar) { return $null }
+        }
         try {
             $c = $script:sidebar.GetUpdatedCache($cr)
             $rows = New-Object System.Collections.Generic.List[object]
