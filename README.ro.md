@@ -76,6 +76,7 @@ Mesajele, vocile, limba și tasta se schimbă din instalator, pentru că vocile 
 
 ## Limitări
 
+- **Problemă cunoscută în v2.0.0**: watcher-ul Cowork folosește tot mai multă memorie cu cât rulează mai mult (cam 100 MB pe oră; pornește la logare). Reparat în v2.0.1. Până atunci, repornește-l o dată pe zi: ieși din cont și intră din nou, sau repornește Windows. Dacă nu folosești Cowork, rulează `install.ps1 -Parts code` și watcher-ul nu se instalează.
 - Deocamdată doar Windows. Tot codul pentru Windows stă în `platform/windows`, ca un port pe macOS să poată fi adăugat mai târziu.
 - Detecția Cowork are nevoie de aplicația desktop Claude deschisă (fereastra poate sta în spatele altora, dar nu închisă în tray), cu lista de conversații vizibilă. Merge cu orice limbă a aplicației Claude (etichetele se citesc din aplicație la instalare). Sunt urmărite doar conversațiile din bara laterală (cele mai recente).
 - Dacă aplicația Claude e fereastra activă și ai folosit-o în ultimele 20 de secunde, Cowork nu vorbește: te uiți deja la ea.
