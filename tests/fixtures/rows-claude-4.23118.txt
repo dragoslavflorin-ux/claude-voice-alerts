@@ -2,56 +2,56 @@
 # Status element first, then the title group. Format: see rows-claude-5.11492.txt.
 
 # finished and read
-expect: other | Conversation A | False
-Button 'Mark as unread Conversation A'
+expect: other | conv-01 | False
+Button 'Mark as unread conv-01'
   Button 'Mark as unread'
     Image 'Done'
   Group ''
-    Text 'Conversation A'
+    Text 'conv-01'
 
 # finished, not read yet
-expect: unread | Conversation B | False
-Button 'Mark as read Conversation B'
+expect: unread | conv-02 | False
+Button 'Mark as read conv-02'
   Button 'Mark as read'
     Image 'Done'
   Group ''
-    Text 'Conversation B'
+    Text 'conv-02'
 
 # running (B-19: Group > StatusBar)
-expect: active | Conversation A | False
-Button 'Running Conversation A'
+expect: active | conv-01 | False
+Button 'Running conv-01'
   Group ''
     StatusBar 'Running'
   Group ''
-    Text 'Conversation A'
+    Text 'conv-01'
 
 # question card
-expect: needs | Conversation A | False
-Button 'Awaiting answer Conversation A'
+expect: needs | conv-01 | False
+Button 'Awaiting answer conv-01'
   Group ''
     StatusBar 'Awaiting answer'
   Group ''
-    Text 'Conversation A'
+    Text 'conv-01'
 
 # permission request
-expect: needs | Conversation A | False
-Button 'Awaiting input Conversation A'
+expect: needs | conv-01 | False
+Button 'Awaiting input conv-01'
   Group ''
     StatusBar 'Awaiting input'
   Group ''
-    Text 'Conversation A'
+    Text 'conv-01'
 
 # idle
-expect: other | Conversation C | False
-Button 'Idle Conversation C'
+expect: other | conv-03 | False
+Button 'Idle conv-03'
   Image 'Idle'
   Group ''
-    Text 'Conversation C'
+    Text 'conv-03'
 
 # scheduled task: badge after the title group (position as in the v2.0.0 parser; the dump shows the row, not the badge text)
-expect: unread | Daily task | True
-Button 'Mark as read Daily task 7 new'
+expect: unread | conv-06 | True
+Button 'Mark as read conv-06 7 new'
   Button 'Mark as read'
   Group ''
-    Text 'Daily task'
+    Text 'conv-06'
   Text '7 new'

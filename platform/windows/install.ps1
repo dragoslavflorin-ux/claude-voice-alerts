@@ -23,7 +23,7 @@ param(
     [string]$Root
 )
 $ErrorActionPreference = 'Continue'
-$VERSION = '2.0.1'
+$VERSION = '2.0.1-beta.1'
 $NAME = 'claude-voice-alerts'
 $src = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $utf8 = New-Object System.Text.UTF8Encoding($false)
@@ -405,7 +405,8 @@ Write-Host "================ $($T.summary) ================" -ForegroundColor Gr
 Write-Host "$NAME $VERSION : $inst"
 foreach ($g in $generated) { Write-Host ("  {0,-13} {1}  ({2})" -f $g.name, $g.text, $g.voice) }
 Write-Host "  $($T.hotkey_ok -replace '\{key\}', $Hotkey)"
-if ($appLine) { Write-Host "  $appLine" }
+# G-03: the "cannot read the sidebar" line is already in the warnings below; print it once
+if ($appLine -and $appLine -ne $T.app_lang_bad) { Write-Host "  $appLine" }
 Write-Host ''
 Write-Host "$($T.manual):" -ForegroundColor Yellow
 if ($code) { Write-Host "  - $($T.manual_code)" }

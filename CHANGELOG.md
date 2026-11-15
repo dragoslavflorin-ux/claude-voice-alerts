@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.0.1 (unreleased)
+## 2.0.1-beta.1 (2026-11-15, pre-release)
 
 ### Fixed
 - Cowork alerts work again with the Claude desktop app 5.x: the conversation list changed its structure (status after the title, every row wrapped in its own groups, no status element on an idle row). One parser now reads the layouts of 4.x and 5.x, with test fixtures for each.
@@ -13,6 +13,7 @@
 - The Cowork watcher reads every 1.5 seconds while a conversation runs or waits, every 5 seconds otherwise.
 - The Cowork log records every change of state of a conversation (`row [title] other -> active`), so a wrong alert can be explained from the log.
 - Safety net: above 300 MB of private memory the watcher hands its state (conversations, running times, alerts on screen) to a new instance and exits.
+- Installer: the "cannot read the sidebar" warning is printed once, not twice.
 - README: Git for Windows in Requirements; open the Claude app before installing; where to run the uninstaller and what it keeps; Cowork tasks under about 3 seconds in the open conversation give no alert.
 
 ## 2.0.0 (2026-11-09)

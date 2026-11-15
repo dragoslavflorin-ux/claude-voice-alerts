@@ -3,18 +3,18 @@
 # Format: see rows-claude-5.11492.txt.
 
 # finished and read: status after the title, inside "Mark as unread"
-expect: other | Conversation A | False
-Button 'Conversation A Mark as unread'
+expect: other | conv-01 | False
+Button 'conv-01 Mark as unread'
   Group ''
-    Text 'Conversation A'
+    Text 'conv-01'
   Button 'Mark as unread'
     Image 'Done'
 
 # idle
-expect: other | Conversation B | False
-Button 'Conversation B Idle'
+expect: other | conv-02 | False
+Button 'conv-02 Idle'
   Group ''
-    Text 'Conversation B'
+    Text 'conv-02'
   Image 'Idle'
 
 # section header
