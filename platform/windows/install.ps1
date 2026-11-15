@@ -23,7 +23,7 @@ param(
     [string]$Root
 )
 $ErrorActionPreference = 'Continue'
-$VERSION = '2.0.0'
+$VERSION = '2.0.1'
 $NAME = 'claude-voice-alerts'
 $src = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $utf8 = New-Object System.Text.UTF8Encoding($false)

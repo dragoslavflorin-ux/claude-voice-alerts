@@ -20,9 +20,12 @@
 - Windows 10 sau 11 (macOS și Linux nu sunt suportate deocamdată)
 - Claude Code, pentru alertele Claude Code
 - Aplicația desktop Claude, pentru alertele Cowork
+- Git for Windows, pentru `git clone` (hook-urile folosesc și Git Bash-ul lui, care le face mai rapide)
 - Internet la instalare (vocile se generează cu edge-tts). Python se instalează prin winget dacă lipsește.
 
 ## Instalare
+
+Pentru alertele Cowork, deschide întâi aplicația desktop Claude, cu lista de conversații (bara laterală) vizibilă: la final, instalatorul verifică dacă o poate citi.
 
 **Cu Claude Code**, spune: `Instalează alertele vocale din https://github.com/dragoslavflorin-ux/claude-voice-alerts`
 
@@ -71,16 +74,15 @@ Mesajele, vocile, limba și tasta se schimbă din instalator, pentru că vocile 
 
 - **Oprești o alertă**: click pe rândul ei, click pe butonul roșu (toate rândurile ferestrei) sau **Ctrl+Alt+M** (tot). Alertele Claude Code se opresc și când trimiți un mesaj nou în sesiunea aceea; alertele Cowork se opresc când folosești aplicația Claude sau când conversația își schimbă starea (citită, aprobată, repornită), chiar și de pe telefon.
 - **Actualizare**: `git pull`, apoi rulezi din nou `install.ps1`.
-- **Dezinstalare**: `powershell -ExecutionPolicy Bypass -File .\uninstall.ps1` scoate exact ce a pus instalatorul.
+- **Dezinstalare**: `powershell -ExecutionPolicy Bypass -File .\uninstall.ps1`, rulat din clonă sau din folderul instalării (`%USERPROFILE%\.claude\hooks\claude-voice-alerts`), scoate exact ce a pus instalatorul. Păstrează backup-urile setărilor (`~/.claude/settings.json.bak-cva-*`), Python și edge-tts.
 - **Diagnostic**: `powershell -ExecutionPolicy Bypass -File .\doctor.ps1` îți spune pe înțeles ce nu merge și ce ai de făcut. În Claude Code poți cere și: "alerta n-a sunat, verifică claude-voice-alerts".
 
 ## Limitări
 
-- **Problemă cunoscută în v2.0.0**: cu aplicația desktop Claude 5.x, alertele Cowork nu funcționează. Aplicația și-a schimbat felul în care e construită lista de conversații, iar watcher-ul nu mai vede nicio conversație. Alertele Claude Code nu sunt afectate. Reparat în v2.0.1. Până atunci, dacă ai aplicația Claude 5.x, rulează `install.ps1 -Parts code`: watcher-ul se oprește și nu mai folosește memorie fără să dea alerte.
-- **Problemă cunoscută în v2.0.0**: watcher-ul Cowork folosește tot mai multă memorie cu cât rulează mai mult (cam 100 MB pe oră; pornește la logare). Reparat în v2.0.1. Până atunci, repornește-l o dată pe zi: ieși din cont și intră din nou, sau repornește Windows. Dacă nu folosești Cowork, rulează `install.ps1 -Parts code` și watcher-ul nu se instalează.
 - Deocamdată doar Windows. Tot codul pentru Windows stă în `platform/windows`, ca un port pe macOS să poată fi adăugat mai târziu.
 - Detecția Cowork are nevoie de aplicația desktop Claude deschisă (fereastra poate sta în spatele altora, dar nu închisă în tray), cu lista de conversații vizibilă. Merge cu orice limbă a aplicației Claude (etichetele se citesc din aplicație la instalare). Sunt urmărite doar conversațiile din bara laterală (cele mai recente).
 - Dacă aplicația Claude e fereastra activă și ai folosit-o în ultimele 20 de secunde, Cowork nu vorbește: te uiți deja la ea.
+- O sarcină Cowork mai scurtă de circa 3 secunde, în conversația pe care o ai deschisă, nu dă alertă. Aplicația arată „Running” sub o secundă și când doar deschizi o conversație, așa că o conversație contează ca pornită doar când două citiri la rând o văd rulând.
 - Click pe un rând Claude Code aduce în față terminalul sau editorul potrivit, când poate fi identificat (Windows Terminal, consolă, VS Code și variantele lui); un anumit tab din interior nu poate fi selectat.
 - Hook-urile rulează prin Git Bash când e instalat (cam 40 ms la fiecare unealtă folosită, costul pornirii bash). Fără Git Bash rulează în PowerShell, cam 0,2 s la fiecare unealtă.
 

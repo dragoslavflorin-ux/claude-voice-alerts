@@ -38,8 +38,17 @@ if (@($cfg.parts) -contains 'code') {
     if (-not (Test-Path -LiteralPath $settings)) { Bad 'settings.json not found' 'run install.ps1 again' }
     else {
         $raw = [IO.File]::ReadAllText($settings)
-        $n = ([regex]::Matches($raw, [regex]::Escape($NAME))).Count
-        if ($n -ge 5) { Good "Claude Code hooks present in settings.json ($n)" } else { Bad "Claude Code hooks missing or incomplete in settings.json ($n of 5)" 'run install.ps1 again' }
+        # one hook of ours per event (G-06: counting the name in the text gave 7 for 5 hooks, and 5 for only 3)
+        $js = $null; try { $js = $raw | ConvertFrom-Json } catch { }
+        $have = @(); $missing = @()
+        foreach ($ev in 'Stop', 'Notification', 'PreToolUse', 'PostToolUse', 'UserPromptSubmit') {
+            $found = $false
+            if ($js -and $js.hooks -and $js.hooks.$ev) { foreach ($g in @($js.hooks.$ev)) { foreach ($h in @($g.hooks)) { if ("$($h.command)" -like "*$NAME*") { $found = $true } } } }
+            if ($found) { $have += $ev } else { $missing += $ev }
+        }
+        if (-not $js) { Bad 'settings.json is not valid JSON' 'open it in an editor and fix the JSON, or restore a settings.json.bak-cva-* backup' }
+        elseif (-not $missing.Count) { Good "Claude Code hooks present in settings.json (5 of 5)" }
+        else { Bad "Claude Code hooks incomplete in settings.json ($($have.Count) of 5, missing: $($missing -join ', '))" 'run install.ps1 again' }
         if ($raw -match 'alerta-start\.ps1|alerta-stop\.ps1') { Bad 'old v1 hooks still present in settings.json' 'run install.ps1 again (it removes them)' }
         if ($raw -match 'fast\.sh') {
             $bash = Get-Command bash -ErrorAction SilentlyContinue

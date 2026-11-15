@@ -20,6 +20,13 @@ $problems = @()
 function Step([string]$t) { Write-Host ''; Write-Host "== $t" -ForegroundColor Cyan }
 function Info([string]$t) { Write-Host "   $t" }
 
+# B-01: run from inside the install folder (the only place uninstall.ps1 exists after an install with Claude Code),
+# this process would hold that folder as its current directory and Windows refuses to delete it. Step out first.
+$here = (Get-Location).ProviderPath
+$bs = [IO.Path]::DirectorySeparatorChar
+$inFolder = $here -and ($here.TrimEnd($bs) + $bs).StartsWith($inst.TrimEnd($bs) + $bs, [StringComparison]::OrdinalIgnoreCase)
+if ($inFolder) { $out = Split-Path $claudeDir -Parent; Set-Location -LiteralPath $out; [Environment]::CurrentDirectory = $out }
+
 Step 'Stopping alerts and the Cowork watcher'
 $n = 0
 foreach ($p in Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" -ErrorAction SilentlyContinue) {
@@ -38,17 +45,22 @@ if (Test-Path -LiteralPath $settings) {
     $tool = Join-Path $PSScriptRoot 'settings_hooks.py'
     if (-not $py) { $problems += 'Python not found: remove by hand the hooks whose command contains claude-voice-alerts from settings.json' }
     else {
-        $bak = "$settings.bak-cva-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
-        Copy-Item -LiteralPath $settings $bak -Force; Info "backup: $bak"
-        $r = & $py -I $tool remove $settings
-        if ($LASTEXITCODE -eq 0) { Info $r } else { $problems += "settings.json could not be changed: $r" }
+        # G-02: a backup only when there is something of ours to remove (a second run made one more backup each time)
+        $cnt = & $py -I $tool count $settings
+        if ($LASTEXITCODE -eq 0 -and "$cnt".Trim() -eq '0') { Info 'no claude-voice-alerts hooks in settings.json' }
+        else {
+            $bak = "$settings.bak-cva-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
+            Copy-Item -LiteralPath $settings $bak -Force; Info "backup: $bak"
+            $r = & $py -I $tool remove $settings
+            if ($LASTEXITCODE -eq 0) { Info $r } else { $problems += "settings.json could not be changed: $r" }
+        }
     }
 }
 
 Step 'Removing shortcuts and autostart'
 foreach ($l in @((Join-Path $startMenu 'Claude Voice Alerts'), (Join-Path $startup 'Claude Voice Alerts watcher.lnk'),
         (Join-Path $desktop 'Opreste vocea Claude.lnk'), (Join-Path $startup 'Claude Cowork watcher.lnk'))) {
-    if (Test-Path -LiteralPath $l) { Remove-Item -LiteralPath $l -Recurse -Force; Info "removed: $l" }
+    if (Test-Path -LiteralPath $l) { Remove-Item -LiteralPath $l -Recurse -Force -ErrorAction SilentlyContinue; if (-not (Test-Path -LiteralPath $l)) { Info "removed: $l" } else { $problems += "could not remove $l" } }
 }
 
 Step 'Removing files'
@@ -61,12 +73,26 @@ $v1 = @('alerta-loop.ps1', 'alerta-stop.ps1', 'alerta-start.ps1', 'alerte-comun.
     'cowork\si-eu-am-nevoie-de-tine.mp3', 'cowork\si-eu-am-nevoie-de-tine.wav', 'cowork\watch.log', 'cowork\watch.log.1')
 foreach ($f in $v1) { $p = Join-Path $hooksDir $f; if (Test-Path -LiteralPath $p) { Remove-Item -LiteralPath $p -Force } }
 $cw = Join-Path $hooksDir 'cowork'; if ((Test-Path $cw) -and -not (Get-ChildItem $cw -Force)) { Remove-Item $cw -Force }
+$leftEmpty = $false
 foreach ($d in @($inst, (Join-Path $claudeDir "skills\$NAME"), $stateDir)) {
-    if ((Test-Path -LiteralPath $d) -and ($d -like "*$NAME*" -or $d -eq $stateDir)) { Remove-Item -LiteralPath $d -Recurse -Force -ErrorAction SilentlyContinue; Info "removed: $d" }
+    if (-not (Test-Path -LiteralPath $d) -or -not ($d -like "*$NAME*" -or $d -eq $stateDir)) { continue }
+    Remove-Item -LiteralPath $d -Recurse -Force -ErrorAction SilentlyContinue
+    if (Test-Path -LiteralPath $d) { Get-ChildItem -LiteralPath $d -Force -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue }
+    # B-02: "removed" only when it is really gone
+    if (-not (Test-Path -LiteralPath $d)) { Info "removed: $d" }
+    elseif ($d -eq $inst -and $inFolder -and -not (Get-ChildItem -LiteralPath $d -Force -ErrorAction SilentlyContinue)) { $leftEmpty = $true }
+    elseif ($d -ne $stateDir) { $problems += "could not remove $d (a file is in use; close it and run again)" }
 }
-foreach ($d in @($inst, (Join-Path $claudeDir "skills\$NAME"))) { if (Test-Path -LiteralPath $d) { $problems += "could not remove $d (a file is in use; close it and run again)" } }
 
 Write-Host ''
 if ($problems.Count) { Write-Host 'Uninstall incomplete:' -ForegroundColor Red; $problems | ForEach-Object { Write-Host "  - $_" }; exit 1 }
-Write-Host 'claude-voice-alerts removed. Backups of settings.json (settings.json.bak-cva-*) were kept.' -ForegroundColor Green
+Write-Host 'claude-voice-alerts removed.' -ForegroundColor Green
+Write-Host '  Kept on purpose:'
+Write-Host "  - backups of settings.json: $settings.bak-cva-* (delete them when you no longer need them)"
+Write-Host '  - Python and edge-tts (other programs may use them). To remove edge-tts: py -m pip uninstall edge-tts'
+if ($leftEmpty) {
+    Write-Host ''
+    Write-Host "  The install folder is empty but your terminal is still inside it, so Windows keeps it. To remove it:" -ForegroundColor Yellow
+    Write-Host "    cd ~; Remove-Item '$inst'" -ForegroundColor Yellow
+}
 exit 0

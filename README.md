@@ -20,9 +20,12 @@
 - Windows 10 or 11 (macOS and Linux are not supported yet)
 - Claude Code, for the Claude Code alerts
 - The Claude desktop app, for the Cowork alerts
+- Git for Windows, for `git clone` (the hooks also use its Git Bash, which makes them faster)
 - Internet during install (the voices are generated with edge-tts). Python is installed with winget if missing.
 
 ## Install
+
+For the Cowork alerts, open the Claude desktop app first, with its conversation list (sidebar) visible: the installer checks at the end that it can read it.
 
 **With Claude Code**, say: `Install the voice alerts from https://github.com/dragoslavflorin-ux/claude-voice-alerts`
 
@@ -71,16 +74,15 @@ Messages, voices, language and hotkey are changed with the installer, because th
 
 - **Stop an alert**: click its row, click the red button (all rows of that window), or press **Ctrl+Alt+M** (everything). Claude Code alerts also stop when you send a new message in that session; Cowork alerts stop when you use the Claude app or when the conversation changes state (read, approved, restarted), even from your phone.
 - **Update**: `git pull`, then run `install.ps1` again.
-- **Uninstall**: `powershell -ExecutionPolicy Bypass -File .\uninstall.ps1` removes exactly what the installer added.
+- **Uninstall**: `powershell -ExecutionPolicy Bypass -File .\uninstall.ps1`, run from the clone or from the install folder (`%USERPROFILE%\.claude\hooks\claude-voice-alerts`), removes exactly what the installer added. It keeps the backups of your settings (`~/.claude/settings.json.bak-cva-*`), Python and edge-tts.
 - **Diagnose**: `powershell -ExecutionPolicy Bypass -File .\doctor.ps1` explains in plain words what does not work and what to do. In Claude Code you can also ask: "the alert did not sound, check claude-voice-alerts".
 
 ## Limitations
 
-- **Known issue in v2.0.0**: with the Claude desktop app 5.x, Cowork alerts do not work. The app changed how its conversation list is built and the watcher no longer sees any conversation. Claude Code alerts are not affected. Fixed in v2.0.1. Until then, if your Claude app is 5.x, run `install.ps1 -Parts code`: the watcher stops and no longer uses memory without giving alerts.
-- **Known issue in v2.0.0**: the Cowork watcher uses more memory the longer it runs (about 100 MB per hour; it starts at logon). Fixed in v2.0.1. Until then, restart it once a day: sign out and back in, or restart Windows. If you do not use Cowork, run `install.ps1 -Parts code` and the watcher is not installed.
 - Windows only for now. All Windows code lives in `platform/windows`, so a macOS port can be added later.
 - Cowork detection needs the Claude desktop app open (its window can stay behind others, but not closed to the tray) with the conversation list visible. It works with every language of the Claude app (labels are read from the app itself at install). Only the conversations listed in the sidebar (the most recent ones) are watched.
 - If the Claude app is the active window and you used it in the last 20 seconds, Cowork does not speak: you are already looking at it.
+- A Cowork task shorter than about 3 seconds, in the conversation you have open, gives no alert. The app also shows "Running" for under a second when you only open a conversation, so a conversation counts as running only when two reads in a row see it running.
 - Clicking a Claude Code row brings the right terminal or editor window to front when it can be identified (Windows Terminal, console, VS Code and its forks); a specific tab inside it cannot be selected.
 - Hooks run through Git Bash when it is installed (about 40 ms per tool call, the cost of starting bash). Without Git Bash they run in PowerShell, about 0.2 s per tool call.
 
