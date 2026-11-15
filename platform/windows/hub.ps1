@@ -139,18 +139,22 @@ function Open-CoworkConversation([string]$Title) {
         $cr = New-Object System.Windows.Automation.CacheRequest
         $cr.Add($A::NameProperty); $cr.TreeFilter = [System.Windows.Automation.Automation]::RawViewCondition
         $act = $cr.Activate()
-        try { $t = $A::FromHandle($w).FindFirst([System.Windows.Automation.TreeScope]::Descendants, $cond) } finally { $act.Dispose() }
+        # every text with that title: the open conversation shows it in its header too (Claude 5.x), not only in the row
+        try { $texts = @($A::FromHandle($w).FindAll([System.Windows.Automation.TreeScope]::Descendants, $cond)) } finally { $act.Dispose() }
         $walker = [System.Windows.Automation.TreeWalker]::RawViewWalker
         $opened = $false
-        for ($el = $t; $el; $el = $walker.GetParent($el)) {
-            if ($el.Current.ControlType -eq [System.Windows.Automation.ControlType]::Button) {
-                # only the row itself ("<status> <title>"), never another button around the same text
-                $n = "$($el.Current.Name)"
-                if ($n -eq $Title -or $n.EndsWith(" $Title")) {
-                    $el.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke(); $opened = $true; Write-CvaLog 'hub' "opened conversation [$Title]"
+        foreach ($t in $texts) {
+            for ($el = $t; $el; $el = $walker.GetParent($el)) {
+                if ($el.Current.ControlType -eq [System.Windows.Automation.ControlType]::Button) {
+                    # only the row itself: "<status> <title>" (4.x) or "<title> <status>" (5.x), never another button
+                    $n = "$($el.Current.Name)"
+                    if ($n -eq $Title -or $n.EndsWith(" $Title") -or $n.StartsWith("$Title ")) {
+                        $el.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke(); $opened = $true; Write-CvaLog 'hub' "opened conversation [$Title]"
+                    }
+                    break
                 }
-                break
             }
+            if ($opened) { break }
         }
         if (-not $opened) { Write-CvaLog 'hub' "conversation [$Title] not found in the sidebar; Claude brought to front only" }
     } catch { Write-CvaLog 'hub' "could not open conversation [$Title]: $($_.Exception.Message)" }

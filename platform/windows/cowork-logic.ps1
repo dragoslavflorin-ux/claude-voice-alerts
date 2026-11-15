@@ -70,6 +70,51 @@ function Get-CoworkEvents($Prev, $Cur, [int]$MassChange = 4) {
     return @{ events = $ev.ToArray(); rebaseline = $false }
 }
 
+# G-18: the app shows "Running" for under a second after a conversation is opened, without a new task. A row
+# counts as running only when two consecutive reads see it running: on the first read its running count stays
+# as confirmed before. Returns the snapshot to feed to Get-CoworkEvents.
+function Get-CoworkStable($Confirmed, $RawPrev, $RawCur) {
+    $s = @{}
+    foreach ($t in $RawCur.Keys) {
+        $ca = Get-CoworkCount $RawCur $t 'active'
+        if ($Confirmed.ContainsKey($t) -and $ca -gt (Get-CoworkCount $Confirmed $t 'active') -and $ca -gt (Get-CoworkCount $RawPrev $t 'active')) {
+            $s[$t] = $Confirmed[$t]; continue   # seen running once: wait for the next read
+        }
+        $s[$t] = $RawCur[$t]
+    }
+    return $s
+}
+
+# State of one title as text for the log: 'active', 'other', 'unread+other' (several rows), 'gone'
+function Get-CoworkStateText($Snap, [string]$Title) {
+    if (-not $Snap.ContainsKey($Title)) { return 'gone' }
+    $p = @(foreach ($c in 'active', 'needs', 'unread', 'other') { $n = [int]$Snap[$Title][$c]; if ($n -eq 1) { $c } elseif ($n -gt 1) { "$c x$n" } })
+    return ($p -join '+')
+}
+
+# Every row whose state changed between two reads: @( "title: from -> to" )
+function Get-CoworkTransitions($Prev, $Cur) {
+    $out = New-Object System.Collections.Generic.List[string]
+    foreach ($t in @(@($Prev.Keys) + @($Cur.Keys) | Sort-Object -Unique)) {
+        $a = Get-CoworkStateText $Prev $t; $b = Get-CoworkStateText $Cur $t
+        if ($a -ne $b) { $out.Add("[$t] $a -> $b") }
+    }
+    return $out.ToArray()
+}
+
+# Adaptive reading: fast while a conversation runs or waits (and right after one is first seen running), slow otherwise
+function Get-CoworkReadInterval($RawCur, [int]$FastMs = 1500, [int]$SlowMs = 5000) {
+    foreach ($t in $RawCur.Keys) { if ((Get-CoworkCount $RawCur $t 'active') + (Get-CoworkCount $RawCur $t 'needs') -gt 0) { return $FastMs } }
+    return $SlowMs
+}
+
+# Debounce: true when a "done" for the same title was handled less than Ms ago (ticks from GetTickCount, wrap safe)
+function Test-CoworkDebounced($LastTick, [long]$NowTick, [int]$Ms = 10000) {
+    if ($null -eq $LastTick) { return $false }
+    $d = (($NowTick - [long]$LastTick) % 4294967296L + 4294967296L) % 4294967296L
+    return ($d -lt $Ms)
+}
+
 # Status label of a conversation row, from its first child element (UIA cached element or any object with
 # .Cached.Name and .CachedChildren). Older app versions name that element directly ("Running", "Idle"), or wrap the
 # label in a "Mark as read" / "Mark as unread" button; newer versions wrap it in an unnamed group

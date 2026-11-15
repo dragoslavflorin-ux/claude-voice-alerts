@@ -56,6 +56,39 @@ Expect 'running row of the 2026 app: Group > StatusBar Running' (Lbl (El '' @((E
 Expect 'label two levels down' (Lbl (El '' @((El '' @((El 'Awaiting input')))))) @('Awaiting input|')
 Expect 'unknown label gives nothing' (Lbl (El '' @((El 'Thinking')))) @('|')
 
+# 8. G-18 (running confirmed on 2 reads), as the watcher loop runs it: sequence of raw reads to the alert events
+#    (clear_done when a row becomes busy is the v2.0.0 rule: a restarted conversation drops its old done alert)
+function Run-Seq([string[]]$cats) {
+    $prev = $null; $rawPrev = $null; $out = @()
+    foreach ($c in $cats) {
+        $raw = Snap @(, @('A', $c))
+        if ($null -eq $prev) { $cur = $raw } else {
+            $cur = Get-CoworkStable $prev $rawPrev $raw
+            $out += @((Get-CoworkEvents $prev $cur).events | Where-Object { $_.type -in 'needs', 'done', 'clear_needs', 'clear_done' } | ForEach-Object { "$($_.type):$($_.title)" })
+        }
+        $prev = $cur; $rawPrev = $raw
+    }
+    return $out
+}
+# capture 2026-11-10 15:02:14-15:02:20: unread, a blink of Running under 1 s while the row is opened, then read
+Expect 'G-18 blink of Running after unread: no second done' (Run-Seq @('unread', 'active', 'other')) @('clear_done:A')
+Expect 'G-18 blink of Running on a read row: nothing' (Run-Seq @('other', 'active', 'other')) @()
+# capture 2026-11-15 20:58-21:01: real task, question card, answered, finished with the conversation open
+Expect 'real task with a question card (5.11492 capture)' (Run-Seq @('other', 'active', 'active', 'active', 'needs', 'needs', 'active', 'active', 'other')) @('clear_done:A', 'needs:A', 'clear_needs:A', 'done:A')
+Expect 'task seen running on 2 reads then done' (Run-Seq @('other', 'active', 'active', 'other')) @('clear_done:A', 'done:A')
+Expect 'task finished unread, Running seen once: done from unread' (Run-Seq @('other', 'active', 'unread')) @('done:A')
+Expect 'question card right away is not held' (Run-Seq @('other', 'needs')) @('clear_done:A', 'needs:A')
+# adaptive reading and debounce
+Expect 'read fast while running' (@(Get-CoworkReadInterval (Snap @(@('A', 'other'), @('B', 'active'))))) @('1500')
+Expect 'read fast while waiting' (@(Get-CoworkReadInterval (Snap @(, @('A', 'needs'))))) @('1500')
+Expect 'read slow when all free' (@(Get-CoworkReadInterval (Snap @(@('A', 'other'), @('B', 'unread'))))) @('5000')
+Expect 'debounce: done 4 s after a done' (@(if (Test-CoworkDebounced 1000 5000) { 'skip' })) @('skip')
+Expect 'debounce: done 11 s after a done' (@(if (Test-CoworkDebounced 1000 12000) { 'skip' })) @()
+Expect 'debounce: first done' (@(if (Test-CoworkDebounced $null 12000) { 'skip' })) @()
+Expect 'debounce across tick wrap' (@(if (Test-CoworkDebounced 4294966000 3000) { 'skip' })) @('skip')
+# transition log lines
+Expect 'transition log' (Get-CoworkTransitions (Snap @(@('A', 'unread'), @('B', 'other'))) (Snap @(@('A', 'active'), @('C', 'other')))) @('[A] unread -> active', '[B] other -> gone', '[C] gone -> other')
+
 # 7. whole rows, on fixtures copied from the UIA tree of each Claude app version (tests\fixtures\rows-claude-*.txt)
 $lm = Get-CoworkLabelMaps (Get-Content -Raw -Encoding UTF8 (Join-Path $PSScriptRoot '..\platform\windows\cowork-labels.json') | ConvertFrom-Json)
 function Parse-Tree([string[]]$lines) {
