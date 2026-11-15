@@ -1,0 +1,58 @@
+# Conversation rows of the Claude desktop app 5.11492 (raw UIA view), captured 2026-11-15 with a real Cowork task.
+# Structure copied from the capture; titles replaced. One block = one row button.
+# Format: "expect: <cat> | <title> | <scheduled>" or "expect: none", then the indented tree ("Type 'Name'").
+
+# idle: no status element at all (capture 21:01:45, after the task)
+expect: other | Conversation A | False
+Button 'Conversation A'
+  Group ''
+    Text 'Conversation A'
+
+# running (capture 20:58:25)
+expect: active | Conversation A | False
+Button 'Conversation A Running'
+  Group ''
+    Text 'Conversation A'
+    StatusBar 'Running'
+
+# question card waiting for an answer (capture 21:00:06)
+expect: needs | Conversation A | False
+Button 'Conversation A Awaiting input'
+  Group ''
+    Text 'Conversation A'
+    StatusBar 'Awaiting input'
+
+# finished, not read yet (capture 20:57:42)
+expect: unread | Conversation B | False
+Button 'Conversation B Unread response'
+  Group ''
+    Text 'Conversation B'
+    StatusBar 'Unread response'
+
+# scheduled task with a badge, unread (idle dump 20:56)
+expect: unread | Weekly task | True
+Button 'Weekly task Weekly Unread response'
+  Group ''
+    Text 'Weekly task'
+    Text 'Weekly'
+    StatusBar 'Unread response'
+
+# artifact entry: badge, skipped like scheduled tasks
+expect: other | Some page | True
+Button 'Some page Artifact'
+  Group ''
+    Text 'Some page'
+    Text 'Artifact'
+
+# section header: no Group with a title, not a row
+expect: none
+Button 'Pinned Unread response'
+  Text 'Pinned'
+  Image 'Unread response'
+
+# a status we do not know yet: the row is skipped for this read, not taken as idle
+expect: none
+Button 'Conversation A Compacting'
+  Group ''
+    Text 'Conversation A'
+    StatusBar 'Compacting'

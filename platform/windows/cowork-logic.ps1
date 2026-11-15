@@ -91,6 +91,77 @@ function Get-CoworkRowLabel($StatusEl, [hashtable]$Known, [hashtable]$MarkRead) 
     return @{ label = ''; wrapper = $wrapper }
 }
 
+# Label maps from cowork-labels.json (every language of the Claude app): label to category, label to language,
+# and the "Mark as read" names (a row wrapped in "Mark as read" is unread).
+function Get-CoworkLabelMaps($Labels) {
+    $catOf = @{}; $langOf = @{}; $markRead = @{}
+    $map = @{ 'Running' = 'active'; 'Using the browser' = 'active'; 'Awaiting input' = 'needs'; 'Awaiting answer' = 'needs'
+        'Unread response' = 'unread'; 'Idle' = 'other'; 'Done' = 'other'; 'Mark as unread' = 'wrapper' }
+    foreach ($lp in $Labels.PSObject.Properties) {
+        foreach ($kp in $lp.Value.PSObject.Properties) {
+            $v = "$($kp.Value)"; if (-not $v) { continue }
+            if ($kp.Name -eq 'Mark as read') { $markRead[$v] = 1; $langOf[$v] = $lp.Name; continue }
+            if ($map.ContainsKey($kp.Name)) { if (-not $catOf.ContainsKey($v)) { $catOf[$v] = $map[$kp.Name] }; if (-not $langOf.ContainsKey($v)) { $langOf[$v] = $lp.Name } }
+        }
+    }
+    return @{ catOf = $catOf; langOf = $langOf; markRead = $markRead }
+}
+
+# Control type of a cached element without the UIA assembly: 'Group', 'Text', 'Button', 'StatusBar', ...
+function Get-CoworkType($El) { return ("$($El.Cached.ControlType.ProgrammaticName)" -replace '^ControlType\.', '') }
+function Test-CoworkNamed($El, [int]$Depth) {
+    if ("$($El.Cached.Name)") { return $true }
+    if ($Depth -ge 3) { return $false }
+    foreach ($k in @($El.CachedChildren)) { if (Test-CoworkNamed $k ($Depth + 1)) { return $true } }
+    return $false
+}
+
+# One conversation row (the row button) gives @{ title; cat; scheduled; label } or $null when it is not a row
+# or its state cannot be told. Layouts seen in the Claude app:
+#   4.23118  Button > [status element] [Group > Text title] [Text badge]
+#   5.1231   Button > [Group > Text title] [Button 'Mark as unread' > Image 'Done'] or [Image 'Idle']
+#   5.11492  Button > [Group > Text title, Text badge, StatusBar 'Running' / 'Awaiting input' / 'Unread response'];
+#            an idle row has no status element at all
+# The title is the first Text of the first Group that holds a Text; a further Text is a badge (scheduled task,
+# artifact); every other element is a status element.
+function Read-CoworkRow($Button, [hashtable]$CatOf, [hashtable]$MarkRead) {
+    $kids = @($Button.CachedChildren)
+    $gi = -1
+    for ($i = 0; $i -lt $kids.Count; $i++) {
+        if ((Get-CoworkType $kids[$i]) -ne 'Group') { continue }
+        if (@($kids[$i].CachedChildren | Where-Object { (Get-CoworkType $_) -eq 'Text' }).Count) { $gi = $i; break }
+    }
+    if ($gi -lt 0) { return $null }
+    $title = $null; $badge = $false
+    $statusEls = New-Object System.Collections.Generic.List[object]
+    foreach ($k in @($kids[$gi].CachedChildren)) {
+        if ((Get-CoworkType $k) -eq 'Text') { if ($null -eq $title) { $title = "$($k.Cached.Name)" } else { $badge = $true } }
+        else { $statusEls.Add($k) }
+    }
+    if (-not $title) { return $null }
+    for ($i = 0; $i -lt $kids.Count; $i++) {
+        if ($i -eq $gi) { continue }
+        if ($i -gt $gi -and (Get-CoworkType $kids[$i]) -eq 'Text') { $badge = $true } else { $statusEls.Add($kids[$i]) }
+    }
+    # unnamed decoration (no name anywhere in its subtree) is not a status element; StatusBar and Image always are
+    $statusEls = @($statusEls | Where-Object { (Get-CoworkType $_) -in 'StatusBar', 'Image' -or (Test-CoworkNamed $_ 0) })
+    $label = ''; $wrapper = ''
+    foreach ($el in $statusEls) {
+        $st = Get-CoworkRowLabel $el $CatOf $MarkRead
+        if ($st.wrapper -and -not $wrapper) { $wrapper = $st.wrapper }
+        if ($st.label -and -not $label) { $label = $st.label }
+    }
+    $unread = $MarkRead.ContainsKey($wrapper)
+    if ($label) { $cat = $CatOf[$label] } else { $cat = $null }
+    if (-not $cat -or $cat -eq 'wrapper') {
+        if ($unread) { $cat = 'unread' }
+        elseif (-not $wrapper -and $statusEls.Count -eq 0) { $cat = 'other' }   # 5.11492: no status element = idle
+        else { return $null }                                                  # a status element we cannot read
+    }
+    if ($cat -eq 'other' -and $unread) { $cat = 'unread' }
+    return @{ title = $title; cat = $cat; scheduled = $badge; label = $label }
+}
+
 # Foreground rule: alert if Claude is not the active window, or it is but nobody touched keyboard/mouse for IdleSeconds.
 function Test-CoworkShouldAlert([bool]$ClaudeForeground, [long]$IdleMs, [int]$IdleSeconds) {
     if (-not $ClaudeForeground) { return $true }

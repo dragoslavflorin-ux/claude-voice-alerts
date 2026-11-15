@@ -1,0 +1,57 @@
+# Conversation rows of the Claude desktop app 4.23118 (raw UIA view), row probes of 2026-11-08/09 (v2.0.0 tests).
+# Status element first, then the title group. Format: see rows-claude-5.11492.txt.
+
+# finished and read
+expect: other | Conversation A | False
+Button 'Mark as unread Conversation A'
+  Button 'Mark as unread'
+    Image 'Done'
+  Group ''
+    Text 'Conversation A'
+
+# finished, not read yet
+expect: unread | Conversation B | False
+Button 'Mark as read Conversation B'
+  Button 'Mark as read'
+    Image 'Done'
+  Group ''
+    Text 'Conversation B'
+
+# running (B-19: Group > StatusBar)
+expect: active | Conversation A | False
+Button 'Running Conversation A'
+  Group ''
+    StatusBar 'Running'
+  Group ''
+    Text 'Conversation A'
+
+# question card
+expect: needs | Conversation A | False
+Button 'Awaiting answer Conversation A'
+  Group ''
+    StatusBar 'Awaiting answer'
+  Group ''
+    Text 'Conversation A'
+
+# permission request
+expect: needs | Conversation A | False
+Button 'Awaiting input Conversation A'
+  Group ''
+    StatusBar 'Awaiting input'
+  Group ''
+    Text 'Conversation A'
+
+# idle
+expect: other | Conversation C | False
+Button 'Idle Conversation C'
+  Image 'Idle'
+  Group ''
+    Text 'Conversation C'
+
+# scheduled task: badge after the title group (position as in the v2.0.0 parser; the dump shows the row, not the badge text)
+expect: unread | Daily task | True
+Button 'Mark as read Daily task 7 new'
+  Button 'Mark as read'
+  Group ''
+    Text 'Daily task'
+  Text '7 new'

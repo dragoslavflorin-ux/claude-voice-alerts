@@ -56,5 +56,37 @@ Expect 'running row of the 2026 app: Group > StatusBar Running' (Lbl (El '' @((E
 Expect 'label two levels down' (Lbl (El '' @((El '' @((El 'Awaiting input')))))) @('Awaiting input|')
 Expect 'unknown label gives nothing' (Lbl (El '' @((El 'Thinking')))) @('|')
 
+# 7. whole rows, on fixtures copied from the UIA tree of each Claude app version (tests\fixtures\rows-claude-*.txt)
+$lm = Get-CoworkLabelMaps (Get-Content -Raw -Encoding UTF8 (Join-Path $PSScriptRoot '..\platform\windows\cowork-labels.json') | ConvertFrom-Json)
+function Parse-Tree([string[]]$lines) {
+    $stack = New-Object System.Collections.Generic.List[object]; $root = $null
+    foreach ($ln in $lines) {
+        if ($ln -notmatch "^( *)(\w+) '(.*)'$") { throw "bad fixture line: $ln" }
+        $d = $Matches[1].Length / 2
+        $n = [PSCustomObject]@{ Cached = [PSCustomObject]@{ Name = $Matches[3]; ControlType = [PSCustomObject]@{ ProgrammaticName = "ControlType.$($Matches[2])" } }; CachedChildren = @() }
+        if ($d -eq 0) { $root = $n; $stack.Clear() } else { $p = $stack[$d - 1]; $p.CachedChildren = @($p.CachedChildren) + $n }
+        while ($stack.Count -gt $d) { $stack.RemoveAt($stack.Count - 1) }
+        $stack.Add($n)
+    }
+    return $root
+}
+foreach ($fx in Get-ChildItem (Join-Path $PSScriptRoot 'fixtures') -Filter 'rows-claude-*.txt') {
+    $ver = $fx.BaseName -replace '^rows-claude-', ''
+    $want = $null; $buf = @(); $n = 0
+    $all = @(Get-Content -Encoding UTF8 $fx.FullName) + @('expect: end')
+    foreach ($ln in $all) {
+        if ($ln -match '^#' -or -not $ln.Trim()) { continue }
+        if ($ln -match '^expect: (.*)$') {
+            if ($null -ne $want) {
+                $n++; $r = Read-CoworkRow (Parse-Tree $buf) $lm.catOf $lm.markRead
+                $got = if ($r) { "$($r.cat) | $($r.title) | $($r.scheduled)" } else { 'none' }
+                Expect "$ver row $n ($want)" @($got) @($want)
+            }
+            $want = $Matches[1].Trim(); $buf = @(); continue
+        }
+        $buf += $ln
+    }
+}
+
 "`n$script:pass passed, $script:fail failed"
 exit $script:fail

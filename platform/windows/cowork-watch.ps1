@@ -1,6 +1,6 @@
 # Cowork watcher: reads the conversation list of the Claude desktop app through UI Automation and raises
 # Cowork alerts on state transitions (see cowork-logic.ps1). One instance per user session (mutex).
-# Rows are parsed by structure: [status element] [Group > Text title] [optional Text badge = scheduled task].
+# Rows are parsed by structure (Read-CoworkRow in cowork-logic.ps1, one layout per app version: 4.x, 5.1231, 5.11492).
 # Status labels come from cowork-labels.json (all languages of the Claude app).
 param([int]$StepMs = 500, [int]$ReadEverySteps = 3, [switch]$Probe)
 $ErrorActionPreference = 'Continue'
@@ -31,16 +31,8 @@ $A = [System.Windows.Automation.AutomationElement]
 
 # label to category, from every language of the Claude app
 $labels = Read-CvaJson (Join-Path $PSScriptRoot 'cowork-labels.json')
-$catOf = @{}; $langOf = @{}; $markRead = @{}
-$map = @{ 'Running' = 'active'; 'Using the browser' = 'active'; 'Awaiting input' = 'needs'; 'Awaiting answer' = 'needs'
-    'Unread response' = 'unread'; 'Idle' = 'other'; 'Done' = 'other'; 'Mark as unread' = 'wrapper' }
-foreach ($lp in $labels.PSObject.Properties) {
-    foreach ($kp in $lp.Value.PSObject.Properties) {
-        $v = "$($kp.Value)"; if (-not $v) { continue }
-        if ($kp.Name -eq 'Mark as read') { $markRead[$v] = 1; $langOf[$v] = $lp.Name; continue }
-        if ($map.ContainsKey($kp.Name)) { if (-not $catOf.ContainsKey($v)) { $catOf[$v] = $map[$kp.Name] }; if (-not $langOf.ContainsKey($v)) { $langOf[$v] = $lp.Name } }
-    }
-}
+$lm = Get-CoworkLabelMaps $labels
+$catOf = $lm.catOf; $langOf = $lm.langOf; $markRead = $lm.markRead
 
 $cr = New-Object System.Windows.Automation.CacheRequest
 $cr.Add($A::NameProperty); $cr.Add($A::ControlTypeProperty)
@@ -62,25 +54,9 @@ function Get-ClaudeWindow {
 
 # One row button gives @{ title; cat; scheduled } or $null
 function Read-Row($b) {
-    $kids = @($b.CachedChildren)
-    if ($kids.Count -lt 2) { return $null }
-    $statusEl = $kids[0]; $title = $null; $badge = $false; $seenGroup = $false
-    foreach ($k in $kids[1..($kids.Count - 1)]) {
-        $ct = $k.Cached.ControlType
-        if ($ct -eq [System.Windows.Automation.ControlType]::Group -and -not $seenGroup) {
-            $seenGroup = $true
-            foreach ($t in @($k.CachedChildren)) { if ($t.Cached.ControlType -eq [System.Windows.Automation.ControlType]::Text) { $title = $t.Cached.Name; break } }
-        }
-        elseif ($seenGroup -and $ct -eq [System.Windows.Automation.ControlType]::Text) { $badge = $true }
-    }
-    if (-not $title) { return $null }
-    $st = Get-CoworkRowLabel $statusEl $catOf $markRead
-    $label = $st.label; $unread = $markRead.ContainsKey($st.wrapper)
-    $cat = $catOf[$label]
-    if (-not $cat -or $cat -eq 'wrapper') { if ($unread) { $cat = 'unread' } else { return $null } }
-    if ($cat -eq 'other' -and $unread) { $cat = 'unread' }
-    if (-not $script:appLang -and $langOf.ContainsKey($label)) { $script:appLang = $langOf[$label] }
-    return @{ title = $title; cat = $cat; scheduled = $badge }
+    $r = Read-CoworkRow $b $catOf $markRead
+    if ($r -and -not $script:appLang -and $r.label -and $langOf.ContainsKey($r.label)) { $script:appLang = $langOf[$r.label] }
+    return $r
 }
 
 # walks the cached subtree of the sidebar; row buttons are nested inside unnamed wrapper groups
@@ -90,6 +66,8 @@ function Collect-Rows($el, $rows, [int]$depth) {
             $r = Read-Row $k
             if ($r) { if (-not $r.scheduled) { $rows.Add($r) }; continue }
         }
+        # section headers ('Pinned') and the rename button of the open conversation sit under a Text: never rows
+        if ($k.Cached.ControlType -eq [System.Windows.Automation.ControlType]::Text) { continue }
         if ($depth -lt 8) { Collect-Rows $k $rows ($depth + 1) }
     }
 }
@@ -101,12 +79,26 @@ function Find-Sidebar($win) {
     $c2.TreeScope = [System.Windows.Automation.TreeScope]'Element, Descendants'
     $c2.TreeFilter = [System.Windows.Automation.Automation]::RawViewCondition
     $act = $c2.Activate()
+    $first = $null; $walker = [System.Windows.Automation.TreeWalker]::RawViewWalker
     try {
         foreach ($b in $root.FindAll([System.Windows.Automation.TreeScope]::Descendants, $btnCond)) {
-            if (Read-Row $b) { return [System.Windows.Automation.TreeWalker]::ControlViewWalker.GetParent($b) }
+            if (-not (Read-Row $b)) { continue }
+            # a button under a Text is a header or the rename button of the open conversation, not a row
+            $p = $walker.GetParent($b)
+            if ($p -and $p.Current.ControlType -eq [System.Windows.Automation.ControlType]::Text) { continue }
+            $first = $b; break
         }
     } finally { $act.Dispose() }
-    return $null
+    if (-not $first) { return $null }
+    # Claude 5.x wraps every row in its own groups: climb to the lowest ancestor that holds the most rows
+    $best = $null; $bestN = 0; $el = $walker.GetParent($first)
+    for ($up = 0; $up -lt 8 -and $el; $up++) {
+        $rows = New-Object System.Collections.Generic.List[object]
+        Collect-Rows ($el.GetUpdatedCache($cr)) $rows 0
+        if ($rows.Count -gt $bestN) { $best = $el; $bestN = $rows.Count }
+        $el = $walker.GetParent($el)
+    }
+    return $best
 }
 
 # list of rows, or $null when the list cannot be read right now
@@ -154,7 +146,13 @@ function Clear-Alerts([string]$Title, [string]$Kind, [string]$Why) {
 if ($Probe) {
     # used by doctor.ps1 and install.ps1: print what the watcher sees, then exit
     $rows = Read-Rows
-    [PSCustomObject]@{ window = ((Get-ClaudeWindow) -ne [IntPtr]::Zero); rows = @($rows); language = $script:appLang } | ConvertTo-Json -Depth 4 -Compress
+    # size of what one read covers (elements in the cached sidebar subtree), to keep the read small
+    $size = 0
+    if ($script:sidebar) {
+        $st = New-Object System.Collections.Stack; $st.Push($script:sidebar.GetUpdatedCache($cr))
+        while ($st.Count) { $e = $st.Pop(); $size++; foreach ($k in @($e.CachedChildren)) { $st.Push($k) } }
+    }
+    [PSCustomObject]@{ window = ((Get-ClaudeWindow) -ne [IntPtr]::Zero); rows = @($rows); language = $script:appLang; read_elements = $size } | ConvertTo-Json -Depth 4 -Compress
     exit 0
 }
 $mx = New-Object System.Threading.Mutex($false, 'Local\ClaudeVoiceAlertsCowork')
