@@ -76,6 +76,7 @@ Messages, voices, language and hotkey are changed with the installer, because th
 
 ## Limitations
 
+- **Known issue in v2.0.0**: with the Claude desktop app 5.x, Cowork alerts do not work. The app changed how its conversation list is built and the watcher no longer sees any conversation. Claude Code alerts are not affected. Fixed in v2.0.1. Until then, if your Claude app is 5.x, run `install.ps1 -Parts code`: the watcher stops and no longer uses memory without giving alerts.
 - **Known issue in v2.0.0**: the Cowork watcher uses more memory the longer it runs (about 100 MB per hour; it starts at logon). Fixed in v2.0.1. Until then, restart it once a day: sign out and back in, or restart Windows. If you do not use Cowork, run `install.ps1 -Parts code` and the watcher is not installed.
 - Windows only for now. All Windows code lives in `platform/windows`, so a macOS port can be added later.
 - Cowork detection needs the Claude desktop app open (its window can stay behind others, but not closed to the tray) with the conversation list visible. It works with every language of the Claude app (labels are read from the app itself at install). Only the conversations listed in the sidebar (the most recent ones) are watched.
